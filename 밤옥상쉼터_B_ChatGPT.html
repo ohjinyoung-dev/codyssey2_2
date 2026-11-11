@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d20">
+  <title>밤 옥상 쉼터</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f3ff;
+      --muted: #b7bdd6;
+      --cyan: #78f3f2;
+      --pink: #ff8de1;
+      --panel: rgba(9, 16, 39, .78);
+      --line: rgba(170, 206, 255, .24);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; }
+    body {
+      min-height: 100svh;
+      overflow: hidden;
+      color: var(--ink);
+      background: #080d20;
+      font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    button { font: inherit; }
+    button:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+    }
+
+    #scene {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      min-height: 100svh;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 43%, rgba(48, 64, 116, .25), transparent 52%),
+        linear-gradient(180deg, #070b1b 0%, #111a38 54%, #263052 76%, #171d32 100%);
+    }
+
+    .stars-layer, .sky-glow, .city, .rooftop, .character-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .sky-glow {
+      inset: 8% 8% 32%;
+      background: radial-gradient(ellipse, rgba(77, 102, 177, .12), transparent 68%);
+      filter: blur(12px);
+    }
+
+    .stars-layer { z-index: 1; }
+    .star {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #eaf5ff;
+      box-shadow: 0 0 7px 2px rgba(177, 219, 255, .7);
+      animation: twinkle 2.8s ease-in-out infinite alternate;
+    }
+    .star:nth-child(3n) { animation-duration: 1.8s; }
+    .star:nth-child(4n) { opacity: .55; transform: scale(.7); }
+    .created-star {
+      width: 5px;
+      height: 5px;
+      background: #fff8ce;
+      box-shadow: 0 0 10px 3px rgba(255, 236, 163, .9);
+      animation: newStar 1.1s ease-out, twinkle 2.8s 1.1s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from { opacity: .35; } to { opacity: 1; } }
+    @keyframes newStar {
+      0% { opacity: 0; transform: scale(.1); }
+      45% { opacity: 1; transform: scale(1.8); }
+      100% { transform: scale(1); }
+    }
+
+    .shooting-star {
+      position: absolute;
+      z-index: 2;
+      width: 110px;
+      height: 2px;
+      opacity: 0;
+      transform: rotate(-28deg);
+      transform-origin: right center;
+      background: linear-gradient(90deg, transparent, rgba(190, 230, 255, .95));
+      filter: drop-shadow(0 0 5px #a8d8ff);
+      animation: shooting 1.35s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes shooting {
+      0% { opacity: 0; translate: 0 0; }
+      12% { opacity: 1; }
+      100% { opacity: 0; translate: -230px 115px; }
+    }
+
+    .city {
+      z-index: 2;
+      top: auto;
+      height: 34%;
+      bottom: 19%;
+      display: flex;
+      align-items: end;
+      justify-content: space-around;
+      gap: 3px;
+      padding: 0 1%;
+      overflow: hidden;
+    }
+    .building {
+      position: relative;
+      flex: 1 1 auto;
+      max-width: 10%;
+      min-width: 4%;
+      height: var(--height);
+      background: linear-gradient(90deg, #101a35, #202b4c 55%, #111a34);
+      border: 1px solid rgba(130, 165, 220, .12);
+      box-shadow: inset 4px 0 12px rgba(0,0,0,.18);
+    }
+    .building::before {
+      content: "";
+      position: absolute;
+      inset: 8px 5px;
+      background-image: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255, 214, 128, .72) 8px 11px, transparent 11px 18px),
+                        repeating-linear-gradient(0deg, transparent 0 13px, rgba(111, 216, 255, .45) 13px 16px, transparent 16px 24px);
+      opacity: .55;
+      mask-image: linear-gradient(#000, transparent 92%);
+    }
+    .building.neon::after {
+      content: "OPEN";
+      position: absolute;
+      top: 28%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 3px 5px;
+      color: #ff9de8;
+      border: 1px solid rgba(255, 141, 225, .65);
+      font-size: clamp(6px, 1vw, 10px);
+      letter-spacing: 2px;
+      text-shadow: 0 0 7px #ff55ce;
+      box-shadow: 0 0 12px rgba(255, 85, 206, .25);
+    }
+    .building.cyan::after {
+      content: "24H";
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #83faff;
+      font-size: clamp(7px, 1.1vw, 11px);
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #42eaff;
+    }
+
+    .distant-haze {
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      right: 0;
+      bottom: 18%;
+      height: 12%;
+      background: linear-gradient(180deg, transparent, rgba(116, 143, 194, .13));
+      pointer-events: none;
+    }
+
+    .railing {
+      position: absolute;
+      z-index: 4;
+      left: 0;
+      right: 0;
+      bottom: 22%;
+      height: 8%;
+      border-top: 5px solid rgba(113, 137, 178, .78);
+      border-bottom: 2px solid rgba(113, 137, 178, .45);
+      background: linear-gradient(180deg, rgba(105, 127, 166, .15), rgba(15, 23, 44, .18));
+      box-shadow: 0 -3px 12px rgba(119, 162, 220, .14);
+    }
+    .railing::before {
+      content: "";
+      position: absolute;
+      inset: -5px 0 0;
+      background: repeating-linear-gradient(90deg, transparent 0 8%, rgba(133, 155, 194, .7) 8% 8.5%, transparent 8.5% 16%);
+    }
+
+    .rooftop {
+      z-index: 5;
+      top: auto;
+      height: 25%;
+      bottom: 0;
+      background:
+        linear-gradient(172deg, rgba(104, 123, 164, .2), transparent 18%),
+        repeating-linear-gradient(174deg, transparent 0 34px, rgba(118, 145, 190, .08) 35px 36px),
+        linear-gradient(180deg, #303a56 0%, #171e34 40%, #0d1327 100%);
+      border-top: 2px solid rgba(156, 180, 220, .38);
+      box-shadow: 0 -16px 35px rgba(4, 8, 22, .3);
+    }
+    .rooftop::before {
+      content: "";
+      position: absolute;
+      inset: 15% 0 auto;
+      height: 1px;
+      background: rgba(165, 193, 232, .15);
+    }
+    .floor-seam {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 54%;
+      height: 1px;
+      background: rgba(155, 180, 220, .12);
+      transform: skewY(-2deg);
+    }
+
+    .character-layer { z-index: 8; }
+    #character {
+      position: absolute;
+      left: 50%;
+      top: 85%;
+      width: 76px;
+      height: 112px;
+      transform: translate(-50%, -100%) scale(.82);
+      transform-origin: center bottom;
+      pointer-events: none;
+      filter: drop-shadow(0 7px 5px rgba(0,0,0,.28));
+      transition: left 1.8s ease-in-out, top 1.8s ease-in-out, transform .8s ease;
+    }
+    #character svg { width: 100%; height: 100%; overflow: visible; }
+    .hood { fill: #202b49; stroke: #7483a9; stroke-width: 2; }
+    .body { fill: #354363; stroke: #8b9abc; stroke-width: 1.6; }
+    .pants { fill: #171f35; stroke: #647391; stroke-width: 1.5; }
+    .shoe { fill: #10172a; stroke: #8594b2; stroke-width: 1.5; }
+    .face { fill: #d9c7b9; }
+    .arm { fill: none; stroke: #354363; stroke-width: 9; stroke-linecap: round; transform-origin: 38px 55px; }
+    .arm.right { transform-origin: 38px 55px; }
+    .leg { fill: none; stroke: #202b43; stroke-width: 10; stroke-linecap: round; transform-origin: 38px 83px; }
+    .held-stick {
+      display: none;
+      stroke: #f4f4ee;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+    #character.smoker .held-stick { display: block; }
+    #character.walking .leg.left { animation: legA .42s ease-in-out infinite alternate; }
+    #character.walking .leg.right { animation: legB .42s ease-in-out infinite alternate; }
+    #character.walking .arm.left { animation: armA .42s ease-in-out infinite alternate; }
+    #character.walking .arm.right { animation: armB .42s ease-in-out infinite alternate; }
+    #character.exhaling .arm.right,
+    #character.exhaling .arm.left { animation: none; }
+    #character.exhaling.hand-to-mouth .arm.right { transform: rotate(-52deg) translateY(-3px); }
+    #character.exhaling.hand-to-mouth .arm.left { transform: rotate(-52deg) translateY(-3px); }
+    #character.exhaling .leg { animation: none !important; }
+    #character.turned { transform: translate(-50%, -100%) scale(var(--depth, .82)) scaleX(-1); }
+    @keyframes legA { to { transform: rotate(24deg); } }
+    @keyframes legB { to { transform: rotate(-24deg); } }
+    @keyframes armA { to { transform: rotate(-25deg); } }
+    @keyframes armB { to { transform: rotate(25deg); } }
+
+    .puff {
+      position: absolute;
+      left: 49%;
+      top: 3%;
+      width: 25px;
+      height: 20px;
+      opacity: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 28% 65%, rgba(255,255,255,.75) 0 22%, transparent 25%),
+        radial-gradient(circle at 55% 40%, rgba(255,255,255,.7) 0 28%, transparent 31%),
+        radial-gradient(circle at 75% 68%, rgba(255,255,255,.55) 0 22%, transparent 25%);
+      filter: blur(1px);
+      pointer-events: none;
+    }
+    #character.exhaling .puff { animation: puffOnce 1.25s ease-out forwards; }
+    #character.exhaling.multi-puff .puff { animation: puffThree 3.1s ease-out forwards; }
+    @keyframes puffOnce {
+      0% { opacity: 0; transform: translate(0, 8px) scale(.4); }
+      25% { opacity: .85; }
+      100% { opacity: 0; transform: translate(12px, -27px) scale(1.6); }
+    }
+    @keyframes puffThree {
+      0%, 10% { opacity: 0; transform: translate(0, 8px) scale(.7); }
+      18% { opacity: .85; }
+      32% { opacity: 0; transform: translate(10px, -23px) scale(1.8); }
+      42% { opacity: 0; transform: translate(0, 8px) scale(.7); }
+      52% { opacity: .85; }
+      67% { opacity: 0; transform: translate(14px, -25px) scale(1.8); }
+      77% { opacity: 0; transform: translate(0, 8px) scale(.7); }
+      86% { opacity: .85; }
+      100% { opacity: 0; transform: translate(12px, -28px) scale(1.8); }
+    }
+
+    .ui {
+      position: relative;
+      z-index: 10;
+      width: min(100%, 760px);
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: clamp(22px, 5vh, 54px) 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      pointer-events: none;
+    }
+    .ui > * { pointer-events: auto; }
+    .brand {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(2rem, 7vw, 3.7rem);
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-shadow: 0 0 5px #fff, 0 0 14px #69e8ff, 0 0 28px #3b9dff, 0 0 48px #e56dff;
+      animation: neonPulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes neonPulse {
+      from { filter: brightness(.9); }
+      to { filter: brightness(1.18); }
+    }
+    .subtitle {
+      margin: 9px 0 0;
+      color: #d8e6ff;
+      font-size: clamp(1rem, 3.5vw, 1.25rem);
+      letter-spacing: .16em;
+      text-shadow: 0 2px 8px #05091a;
+    }
+    #screen {
+      width: min(100%, 500px);
+      margin: auto 0;
+      padding: 22px 0 5vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 17px;
+    }
+    .prompt {
+      margin: 0;
+      color: #e9efff;
+      font-size: clamp(1.05rem, 3.8vw, 1.3rem);
+      text-shadow: 0 2px 10px #080d20;
+    }
+    .mode-buttons, .action-buttons {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn {
+      min-height: 48px;
+      padding: 12px 19px;
+      color: #f8f8ff;
+      background: rgba(22, 35, 67, .82);
+      border: 1px solid rgba(157, 204, 255, .48);
+      border-radius: 999px;
+      box-shadow: 0 5px 18px rgba(0,0,0,.2), inset 0 0 14px rgba(124, 180, 255, .08);
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+      backdrop-filter: blur(8px);
+    }
+    .btn:hover { transform: translateY(-2px); background: rgba(48, 66, 111, .92); }
+    .btn.primary {
+      color: #091328;
+      font-weight: 800;
+      border-color: transparent;
+      background: linear-gradient(110deg, #a4f5f3, #b9c9ff 55%, #f2b8ee);
+      box-shadow: 0 0 22px rgba(124, 220, 255, .32);
+    }
+    .btn.primary:hover { background: linear-gradient(110deg, #c5fffc, #d1dcff 55%, #ffd0f7); }
+    .btn.subtle { background: rgba(10, 17, 37, .54); border-color: rgba(185, 198, 226, .25); }
+    .btn:disabled { opacity: .32; cursor: not-allowed; transform: none; }
+    .back-button {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      min-height: 40px;
+      padding: 8px 14px;
+      font-size: .9rem;
+    }
+    .timer-button {
+      min-width: min(78vw, 290px);
+      min-height: 76px;
+      font-size: clamp(1.2rem, 4.5vw, 1.55rem);
+    }
+    .timer {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(3.7rem, 16vw, 6.4rem);
+      line-height: 1;
+      font-weight: 300;
+      letter-spacing: .04em;
+      text-shadow: 0 0 22px rgba(130, 210, 255, .45);
+    }
+    .breath {
+      min-height: 52px;
+      margin: 0;
+      color: #b9f8f5;
+      font-size: clamp(1.35rem, 5vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-shadow: 0 0 14px rgba(95, 239, 232, .5);
+    }
+    .breath-number {
+      display: inline-block;
+      min-width: 1.1em;
+      margin-left: .15em;
+      color: #fff;
+      font-size: 1.2em;
+      font-variant-numeric: tabular-nums;
+    }
+    .finish-title {
+      margin: 0;
+      font-size: clamp(1.5rem, 5.5vw, 2.1rem);
+      text-shadow: 0 0 18px rgba(127, 231, 255, .45);
+    }
+    .message {
+      max-width: 92%;
+      margin: 0;
+      color: #ffe7b4;
+      font-size: clamp(1rem, 3.8vw, 1.2rem);
+      line-height: 1.65;
+      text-shadow: 0 2px 9px #080d20;
+    }
+    .count {
+      margin: 0;
+      color: #d4ddf5;
+      font-size: .95rem;
+    }
+    .helper {
+      color: #aebbd8;
+      font-size: .86rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 480px) {
+      .ui { padding: 24px 16px 16px; }
+      .brand { letter-spacing: .045em; }
+      #screen { padding-bottom: 12vh; gap: 15px; }
+      .mode-buttons { flex-direction: column; align-items: stretch; width: min(100%, 290px); }
+      .mode-buttons .btn { width: 100%; }
+      .action-buttons { gap: 8px; }
+      .action-buttons .btn { flex: 1 1 auto; }
+      .back-button { top: 12px; left: 12px; }
+      #character { width: 65px; height: 96px; }
+    }
+
+    @media (max-height: 650px) {
+      .ui { padding-top: 16px; }
+      .brand { font-size: clamp(1.8rem, 6vw, 2.7rem); }
+      #screen { padding-top: 12px; padding-bottom: 5vh; gap: 11px; }
+      .timer { font-size: clamp(3rem, 12vw, 4.8rem); }
+      .timer-button { min-height: 60px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      #character { transition-duration: .01ms; }
+    }
+  </style>
+</head>
+<body>
+  <main id="scene" aria-label="밤 옥상 풍경">
+    <div class="sky-glow"></div>
+    <div id="stars" class="stars-layer" aria-hidden="true"></div>
+
+    <div class="city" aria-hidden="true">
+      <div class="building" style="--height:48%"></div>
+      <div class="building neon" style="--height:72%"></div>
+      <div class="building" style="--height:58%"></div>
+      <div class="building cyan" style="--height:86%"></div>
+      <div class="building" style="--height:64%"></div>
+      <div class="building neon" style="--height:76%"></div>
+      <div class="building" style="--height:54%"></div>
+      <div class="building cyan" style="--height:91%"></div>
+      <div class="building" style="--height:61%"></div>
+      <div class="building neon" style="--height:70%"></div>
+      <div class="building" style="--height:50%"></div>
+      <div class="building" style="--height:79%"></div>
+      <div class="building cyan" style="--height:60%"></div>
+    </div>
+    <div class="distant-haze"></div>
+    <div class="railing" aria-hidden="true"></div>
+    <div class="rooftop" aria-hidden="true"><div class="floor-seam"></div></div>
+
+    <div class="character-layer" aria-hidden="true">
+      <div id="character">
+        <svg viewBox="0 0 76 112" role="img" aria-label="">
+          <ellipse cx="38" cy="105" rx="22" ry="5" fill="rgba(0,0,0,.25)"/>
+          <path class="leg left" d="M31 79 L27 96 L21 103"/>
+          <path class="leg right" d="M45 79 L49 96 L55 103"/>
+          <path class="shoe" d="M20 100 Q13 101 14 106 L29 107 Q31 103 25 101 Z"/>
+          <path class="shoe" d="M51 100 Q47 103 49 107 L64 106 Q65 102 57 100 Z"/>
+          <path class="body" d="M25 45 Q38 39 51 45 L56 79 Q38 87 20 79 Z"/>
+          <path class="arm left" d="M25 51 Q15 61 19 73"/>
+          <path class="arm right" d="M51 51 Q61 61 57 73"/>
+          <path class="hood" d="M19 27 Q17 8 38 7 Q59 8 57 28 L53 48 Q38 56 23 48 Z"/>
+          <ellipse class="face" cx="38" cy="31" rx="12" ry="14"/>
+          <path class="hood" d="M25 28 Q25 12 38 12 Q51 12 51 28 Q46 20 38 21 Q30 20 25 28 Z"/>
+          <path d="M32 34 Q38 37 44 34" fill="none" stroke="#725c58" stroke-width="1.4" stroke-linecap="round"/>
+          <path class="held-stick" d="M58 71 L66 63"/>
+        </svg>
+        <div class="puff"></div>
+      </div>
+    </div>
+
+    <section class="ui">
+      <h1 class="brand">밤 옥상 쉼터</h1>
+      <p class="subtitle">쉬어 가세요.</p>
+      <div id="screen" aria-live="polite">
+        <p class="prompt">지금 나는?</p>
+        <div class="mode-buttons">
+          <button class="btn" data-mode="non">비흡연자</button>
+          <button class="btn" data-mode="quit">금연 중</button>
+          <button class="btn" data-mode="smoke">흡연자</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const scene = document.getElementById("scene");
+      const starsLayer = document.getElementById("stars");
+      const character = document.getElementById("character");
+      const screen = document.getElementById("screen");
+
+      const modes = {
+        non: {
+          prepare: "잠깐 바람 쐬고 가요.",
+          start: "3분 쉬어 가기",
+          finish: "3분 쉬었어요.",
+          messages: [
+            "여기까지 온 것만으로도 오늘은 충분해요.",
+            "별은 매일 밤 같은 자리에서 기다리고 있어요.",
+            "숨 한 번에 마음이 조금 가벼워졌길 바라요.",
+            "도시도 하나씩 불을 끄고 쉬는 시간이에요.",
+            "언제든 바람 쐬러 또 와요."
+          ],
+          hand: "none",
+          puff: "single"
+        },
+        quit: {
+          prepare: "담배 생각날 때, 3분만 여기서 버텨요.",
+          start: "3분 버티기",
+          finish: "3분 버텼어요. 담배 생각이 지나갔나요?",
+          messages: [
+            "방금 담배 생각 하나를 이겼어요.",
+            "이런 3분이 쌓여서 어제보다 더 멀리 왔어요.",
+            "참아 낸 건 약해서가 아니라 단단해서예요.",
+            "오늘 밤공기는 연기 없이 마셔도 시원하죠?",
+            "다음에 또 생각나면 여기로 와요."
+          ],
+          hand: "mouth",
+          puff: "triple"
+        },
+        smoke: {
+          prepare: "오늘도 수고했어요. 잠깐 숨 돌리고 가요.",
+          start: "3분 숨 돌리기",
+          finish: "3분 쉬었어요.",
+          messages: [
+            "오늘 하루도 정말 수고 많았어요.",
+            "밤공기 한 모금, 괜찮죠?",
+            "잠깐이라도 아무 생각 없이 쉬어 가요.",
+            "불 켜진 창마다 각자의 하루가 있어요.",
+            "또 숨 돌리고 싶을 때 와요."
+          ],
+          hand: "stick",
+          puff: "triple"
+        }
+      };
+
+      let currentMode = null;
+      let state = "home";
+      let timerInterval = null;
+      let timerEndAt = 0;
+      let completedCount = 0;
+      let messageIndex = 0;
+      let characterTimer = null;
+      let characterMoveTimer = null;
+      let shootingTimer = null;
+      let lastExhaleCycle = -1;
+      const TOTAL_SECONDS = 180;
+
+      function addInitialStars() {
+        const positions = [
+          [7, 10], [16, 18], [26, 8], [36, 15], [46, 7], [57, 19],
+          [67, 9], [78, 15], [89, 7], [95, 24], [12, 31], [22, 27],
+          [33, 34], [43, 25], [54, 32], [64, 26], [74, 36], [85, 29],
+          [4, 42], [18, 43], [29, 40], [40, 46], [51, 41], [62, 47],
+          [73, 43], [84, 48], [94, 39], [9, 55], [31, 53], [70, 55]
+        ];
+        positions.forEach(([x, y], i) => {
+          const star = document.createElement("span");
+          star.className = "star";
+          star.style.left = x + "%";
+          star.style.top = y + "%";
+          star.style.animationDelay = (i % 7) * -.37 + "s";
+          starsLayer.appendChild(star);
+        });
+      }
+
+      function addStar(x, y) {
+        const star = document.createElement("span");
+        star.className = "star created-star";
+        star.style.left = x + "px";
+        star.style.top = y + "px";
+        starsLayer.appendChild(star);
+        const created = starsLayer.querySelectorAll(".created-star");
+        if (created.length > 30) created[0].remove();
+      }
+
+      scene.addEventListener("click", event => {
+        if (event.target.closest("button")) return;
+        const rect = scene.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        if (y < rect.height * .72) addStar(x, y);
+      });
+
+      function makeShootingStar() {
+        const star = document.createElement("i");
+        star.className = "shooting-star";
+        star.style.left = (55 + Math.random() * 38) + "%";
+        star.style.top = (8 + Math.random() * 35) + "%";
+        starsLayer.appendChild(star);
+        star.addEventListener("animationend", () => star.remove(), { once: true });
+      }
+
+      function startSky() {
+        shootingTimer = window.setInterval(makeShootingStar, 20000);
+      }
+
+      function setCharacterMode(mode) {
+        character.classList.toggle("smoker", mode === "smoke");
+      }
+
+      function clearCharacterAction() {
+        character.classList.remove("walking", "exhaling", "multi-puff", "turned", "hand-to-mouth");
+      }
+
+      function moveCharacter() {
+        if (state === "running" && isExhalingNow()) return;
+        clearCharacterAction();
+        const action = Math.random();
+        if (action < .58) {
+          character.classList.add("walking");
+          const x = 12 + Math.random() * 76;
+          const y = 79 + Math.random() * 16;
+          const depth = .62 + ((y - 79) / 16) * .48;
+          character.style.setProperty("--depth", depth.toFixed(2));
+          character.style.left = x + "%";
+          character.style.top = y + "%";
+          character.style.transform = `translate(-50%, -100%) scale(${depth})`;
+          characterMoveTimer = window.setTimeout(() => {
+            if (state !== "running" || !isExhalingNow()) idleCharacter();
+          }, 1800);
+        } else if (action < .82) {
+          idleCharacter();
+        } else {
+          character.classList.add("turned");
+          character.style.setProperty("--depth", ".82");
+        }
+        scheduleCharacterAction(2200 + Math.random() * 2400);
+      }
+
+      function idleCharacter() {
+        clearCharacterAction();
+        character.style.transform = "translate(-50%, -100%) scale(var(--depth, .82))";
+      }
+
+      function scheduleCharacterAction(delay) {
+        window.clearTimeout(characterTimer);
+        characterTimer = window.setTimeout(moveCharacter, delay);
+      }
+
+      function isExhalingNow() {
+        if (state !== "running") return false;
+        const elapsed = Math.max(0, Math.floor((Date.now() - (timerEndAt - TOTAL_SECONDS * 1000)) / 1000));
+        return elapsed % 10 >= 4;
+      }
+
+      function showHome() {
+        state = "home";
+        currentMode = null;
+        completedCount = 0;
+        messageIndex = 0;
+        stopTimer();
+        setCharacterMode(null);
+        clearCharacterAction();
+        screen.innerHTML = `
+          <p class="prompt">지금 나는?</p>
+          <div class="mode-buttons">
+            <button class="btn" data-mode="non">비흡연자</button>
+            <button class="btn" data-mode="quit">금연 중</button>
+            <button class="btn" data-mode="smoke">흡연자</button>
+          </div>`;
+      }
+
+      function showPrepare() {
+        state = "prepare";
+        const mode = modes[currentMode];
+        screen.innerHTML = `
+          <button class="btn subtle back-button" id="homeButton">처음으로</button>
+          <p class="prompt">${mode.prepare}</p>
+          <button class="btn primary timer-button" id="startButton">${mode.start}</button>`;
+        document.getElementById("homeButton").addEventListener("click", showHome);
+        document.getElementById("startButton").addEventListener("click", startTimer);
+      }
+
+      function showRunning() {
+        screen.innerHTML = `
+          <button class="btn subtle back-button" id="homeButton" disabled>처음으로</button>
+          <p class="timer" id="timerDisplay">3:00</p>
+          <p class="breath" id="breathDisplay">들이쉬세요 <span class="breath-number">4</span></p>
+          <button class="btn subtle" id="stopButton">그만하기</button>`;
+        document.getElementById("stopButton").addEventListener("click", stopToPrepare);
+      }
+
+      function showFinish() {
+        state = "finish";
+        const mode = modes[currentMode];
+        const message = mode.messages[messageIndex % mode.messages.length];
+        messageIndex = (messageIndex + 1) % mode.messages.length;
+        completedCount += 1;
+        screen.innerHTML = `
+          <h2 class="finish-title">${mode.finish}</h2>
+          <p class="message">${message}</p>
+          <p class="count">이번에 마친 횟수: ${completedCount}번</p>
+          <div class="action-buttons">
+            <button class="btn primary" id="againButton">한 번 더</button>
+            <button class="btn subtle" id="homeButton">처음으로</button>
+          </div>`;
+        document.getElementById("againButton").addEventListener("click", startTimer);
+        document.getElementById("homeButton").addEventListener("click", showHome);
+        clearCharacterAction();
+        scheduleCharacterAction(700);
+      }
+
+      function startTimer() {
+        stopTimer();
+        state = "running";
+        lastExhaleCycle = -1;
+        showRunning();
+        setCharacterMode(currentMode);
+        timerEndAt = Date.now() + TOTAL_SECONDS * 1000;
+        updateTimer();
+        timerInterval = window.setInterval(updateTimer, 100);
+      }
+
+      function stopTimer() {
+        if (timerInterval !== null) {
+          window.clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      function stopToPrepare() {
+        if (state !== "running") return;
+        stopTimer();
+        clearCharacterAction();
+        showPrepare();
+        scheduleCharacterAction(500);
+      }
+
+      function updateTimer() {
+        if (state !== "running") return;
+        const remainingMs = Math.max(0, timerEndAt - Date.now());
+        const remaining = Math.ceil(remainingMs / 1000);
+        const elapsed = TOTAL_SECONDS - remaining;
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        const timerDisplay = document.getElementById("timerDisplay");
+        const breathDisplay = document.getElementById("breathDisplay");
+        if (!timerDisplay || !breathDisplay) return;
+        timerDisplay.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+
+        if (remainingMs <= 0) {
+          stopTimer();
+          showFinish();
+          return;
+        }
+
+        const phase = elapsed % 10;
+        const cycle = Math.floor(elapsed / 10);
+        if (phase < 4) {
+          breathDisplay.innerHTML = `들이쉬세요 <span class="breath-number">${4 - phase}</span>`;
+          if (lastExhaleCycle !== cycle) {
+            lastExhaleCycle = cycle;
+            clearCharacterAction();
+            scheduleCharacterAction(500);
+          }
+          if (!character.classList.contains("walking") && !characterTimer) {
+            scheduleCharacterAction(300);
+          }
+        } else {
+          const number = 6 - (phase - 4);
+          breathDisplay.innerHTML = `내쉬세요 <span class="breath-number">${number}</span>`;
+          if (lastExhaleCycle !== cycle + 100) {
+            lastExhaleCycle = cycle + 100;
+            beginExhale();
+          }
+        }
+      }
+
+      function beginExhale() {
+        window.clearTimeout(characterTimer);
+        window.clearTimeout(characterMoveTimer);
+        clearCharacterAction();
+        character.classList.add("exhaling", "turned");
+        character.style.setProperty("--depth", ".82");
+        if (currentMode !== "non") character.classList.add("hand-to-mouth");
+        if (modes[currentMode].puff === "triple") character.classList.add("multi-puff");
+      }
+
+      screen.addEventListener("click", event => {
+        const button = event.target.closest("[data-mode]");
+        if (!button) return;
+        currentMode = button.dataset.mode;
+        completedCount = 0;
+        messageIndex = 0;
+        setCharacterMode(currentMode);
+        showPrepare();
+        scheduleCharacterAction(300);
+      });
+
+      addInitialStars();
+      startSky();
+      setCharacterMode(null);
+      character.style.left = "50%";
+      character.style.top = "87%";
+      character.style.setProperty("--depth", ".86");
+      scheduleCharacterAction(1200);
+    })();
+  </script>
+</body>
+</html>
